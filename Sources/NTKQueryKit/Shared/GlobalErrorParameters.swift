@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct GlobalErrorParameters {
+public struct GlobalErrorParameters {
     let error: Error
     let meta: MetaDictionary
 }

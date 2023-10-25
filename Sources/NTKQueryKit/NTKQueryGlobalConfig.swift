@@ -7,12 +7,8 @@
 
 import Foundation
 
-final class NTKQueryGlobalConfig {
-    typealias QueriesConfigDictionary = [String: QueryConfig]
-    typealias MutationsConfigDictionary = [String: MutationConfig]
-    typealias GlobalOnErrorFunction = (_ payload: GlobalErrorParameters) -> Void
-    
-    static let shared = NTKQueryGlobalConfig()
+public final class NTKQueryGlobalConfig {
+    public static let shared = NTKQueryGlobalConfig()
     
     private var isInitialized = false
     internal var queriesConfig: QueriesConfigDictionary = [:]
@@ -22,7 +18,7 @@ final class NTKQueryGlobalConfig {
     
     private init() {}
     
-    func initializeWithConfiguration(
+    public func initializeWithConfiguration(
         queriesConfig: QueriesConfigDictionary? = nil,
         globalOnErrorQuery: GlobalOnErrorFunction? = nil,
         mutationsConfig: MutationsConfigDictionary? = nil,

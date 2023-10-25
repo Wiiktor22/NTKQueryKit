@@ -8,31 +8,35 @@
 import Foundation
 
 // MARK: Query
-
-enum QueryStatus {
+public enum QueryStatus {
     case Loading
     case Success
     case Error
 }
 
-typealias DefaultQueryFunction = () async throws -> Codable
+public typealias DefaultQueryFunction = () async throws -> Codable
+public typealias QueryFunction<TData: Codable> = () async throws -> TData
+
+public typealias QueriesConfigDictionary = [String: QueryConfig]
 
 // MARK: Mutation
-
-enum MutationStatus {
+public enum MutationStatus {
     case ReadyToUse
     case Pending
     case Success
     case Error
 }
 
-typealias DefaultMutationFunction = () async throws -> Codable?
-typealias MutationFunction<TData: Codable> = () async throws -> TData?
+public typealias DefaultMutationFunction = () async throws -> Codable?
+public typealias MutationFunction<TData: Codable> = () async throws -> TData?
 
-typealias MutationSuccessHandler = (_ data: Codable) -> Void
-typealias MutationErrorHandler = (_ error: GlobalErrorParameters) -> Void
+public typealias MutationSuccessHandler = (_ data: Codable) -> Void
+public typealias MutationErrorHandler = (_ error: GlobalErrorParameters) -> Void
+
+public typealias MutationsConfigDictionary = [String: MutationConfig]
 
 // MARK: Shared
+public typealias MetaDictionary = [String: Codable]
 
-typealias MetaDictionary = [String: Codable]
+public typealias GlobalOnErrorFunction = (_ payload: GlobalErrorParameters) -> Void
 

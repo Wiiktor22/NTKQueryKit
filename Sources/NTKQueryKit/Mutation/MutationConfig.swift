@@ -7,16 +7,14 @@
 
 import Foundation
 
-struct MutationConfig {
-    typealias MutationFunction = () async throws -> Codable?
+public struct MutationConfig {
+    public let mutationFunction: DefaultMutationFunction?
+    public let onSuccess: MutationSuccessHandler?
+    public let onError: MutationErrorHandler?
+    public let meta: MetaDictionary?
     
-    let mutationFunction: MutationFunction?
-    let onSuccess: MutationSuccessHandler?
-    let onError: MutationErrorHandler?
-    let meta: MetaDictionary?
-    
-    init(
-        mutationFunction: MutationFunction? = nil,
+    public init(
+        mutationFunction: DefaultMutationFunction? = nil,
         onSuccess: MutationSuccessHandler? = nil,
         onError: MutationErrorHandler? = nil,
         meta: MetaDictionary? = nil

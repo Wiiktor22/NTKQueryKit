@@ -7,20 +7,20 @@
 
 import Foundation
 
-final class QueryClient {
-    static let shared = QueryClient()
+public final class QueryClient {
+    public static let shared = QueryClient()
     
     private init() {}
     
-    func getQueryData<T: Codable>(queryKey: String) -> T? {
+    public func getQueryData<T: Codable>(queryKey: String) -> T? {
         QueryCache.shared.readCacheEntry(key: queryKey)?.data as? T
     }
     
-    func getQueryState(queryKey: String) -> QueryCacheEntry? {
+    public func getQueryState(queryKey: String) -> QueryCacheEntry? {
         QueryCache.shared.readCacheEntry(key: queryKey)
     }
     
-    func setQueryData(queryKey: String, data: Codable) {
+    public func setQueryData(queryKey: String, data: Codable) {
         QueryCache.shared.overrideCacheEntry(key: queryKey, value: data)
         QueryInternalPublishersManager.shared.sendThroughPublisher(forKey: queryKey, message: QueryPublisherMessage(data: data, status: .Success))
     }
@@ -32,7 +32,7 @@ final class QueryClient {
         }
     }
     
-    func prefetchQuery(queryKey: String, queryFunction: DefaultQueryFunction?) async {
+    public func prefetchQuery(queryKey: String, queryFunction: DefaultQueryFunction?) async {
         if let queryFunction = queryFunction {
             await fetchQuery(queryKey: queryKey, queryFunction: queryFunction)
         } else if let globalQueryFunction = NTKQueryGlobalConfig.shared.queriesConfig[queryKey]?.queryFunction {
@@ -40,7 +40,7 @@ final class QueryClient {
         }
     }
     
-    func removeQuery(queryKey: String) {
+    public func removeQuery(queryKey: String) {
         QueryCache.shared.removeCacheEntry(key: queryKey)
     }
 }

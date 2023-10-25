@@ -10,21 +10,24 @@ import SwiftUI
 import Combine
 
 @propertyWrapper
-struct NTKQuery<TData: Codable>: DynamicProperty {
-    typealias QueryFunction = () async throws -> TData
+public struct NTKQuery<TData: Codable>: DynamicProperty {
+    @StateObject private var query: Query<TData>
     
-    @StateObject var query: Query<TData>
-    
-    init(queryKey: String, queryFunction: QueryFunction? = nil, staleTime: Int? = nil, meta: MetaDictionary? = nil) {
+    public init(
+        queryKey: String,
+        queryFunction: DefaultQueryFunction? = nil,
+        staleTime: Int? = nil,
+        meta: MetaDictionary? = nil
+    ) {
         let config = QueryConfig(queryFunction: queryFunction, staleTime: staleTime, meta: meta)
         _query = StateObject(wrappedValue: Query(queryKey: queryKey, config: config))
     }
     
-    var wrappedValue: Query<TData> { query }
+    public var wrappedValue: Query<TData> { query }
 }
 
 @MainActor
-class Query<TData: Codable>: ObservableObject {
+public class Query<TData: Codable>: ObservableObject {
     // MARK: Query - Properties
     
     private typealias QueryPublisherMessageContent = (data: TData?, status: QueryStatus)
@@ -33,14 +36,14 @@ class Query<TData: Codable>: ObservableObject {
     private let queryKey: String
     private let config: QueryConfig
     
-    @Published var isFetched = false
-    @Published var lastStatus: QueryStatus = .Loading
-    @Published var data: TData? = nil
-    @Published var error: Error? = nil
+    @Published public var isFetched = false
+    @Published public var lastStatus: QueryStatus = .Loading
+    @Published public var data: TData? = nil
+    @Published public var error: Error? = nil
     
-    var isLoading: Bool { lastStatus == .Loading }
-    var isSuccess: Bool { lastStatus == .Success }
-    var isError: Bool { lastStatus == .Error }
+    public var isLoading: Bool { lastStatus == .Loading }
+    public var isSuccess: Bool { lastStatus == .Success }
+    public var isError: Bool { lastStatus == .Error }
     
     private var queryFunction: DefaultQueryFunction? {
         if let localQueryFunction = self.config.queryFunction {
@@ -182,7 +185,7 @@ class Query<TData: Codable>: ObservableObject {
         fetchAssignDistrubuteAndSaveData(queryKey, queryFunction, staleTime)
     }
     
-    func refetch() {
+    public func refetch() {
         guard let queryFunction = self.queryFunction else { return }
         self.lastStatus = .Loading
         

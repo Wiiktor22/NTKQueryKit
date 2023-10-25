@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol QueryCacheEntry {
+public protocol QueryCacheEntry {
     var lastUpdateTime: Date { get set }
     var data: Codable { get set }
 }
@@ -23,7 +23,7 @@ private class _QueryCacheEntry: QueryCacheEntry {
     }
 }
 
-internal final class QueryCache {
+final class QueryCache {
     static let shared = QueryCache()
     
     private init() {}

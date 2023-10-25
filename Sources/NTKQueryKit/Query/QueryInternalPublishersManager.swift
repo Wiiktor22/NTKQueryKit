@@ -8,12 +8,12 @@
 import Foundation
 import Combine
 
-struct QueryPublisherMessage {
+public struct QueryPublisherMessage {
     let data: Codable?
     let status: QueryStatus
 }
 
-internal final class QueryInternalPublishersManager {
+final class QueryInternalPublishersManager {
     typealias QueryPublisher = PassthroughSubject<QueryPublisherMessage, Never>
     
     static let shared = QueryInternalPublishersManager()

@@ -9,10 +9,10 @@ import Foundation
 import SwiftUI
 
 @propertyWrapper
-struct NTKMutation<TData: Codable>: DynamicProperty {
+public struct NTKMutation<TData: Codable>: DynamicProperty {
     @StateObject var mutation: Mutation<TData>
     
-    init(
+    public init(
         mutationKey: String,
         mutationFunction: MutationFunction<TData>? = nil,
         onSuccess: MutationSuccessHandler? = nil,
@@ -22,23 +22,23 @@ struct NTKMutation<TData: Codable>: DynamicProperty {
         _mutation = StateObject(wrappedValue: Mutation<TData>(mutationKey: mutationKey, config: config))
     }
     
-    var wrappedValue: Mutation<TData> { mutation }
+    public var wrappedValue: Mutation<TData> { mutation }
 }
 
 @MainActor
-final class Mutation<TData: Codable>: ObservableObject {
+public final class Mutation<TData: Codable>: ObservableObject {
     private let mutationKey: String
     private var config: MutationConfig
     
-    @Published var lastStatus: MutationStatus = .ReadyToUse
-    @Published var data: TData? = nil
-    @Published var error: Error? = nil
+    @Published public var lastStatus: MutationStatus = .ReadyToUse
+    @Published public var data: TData? = nil
+    @Published public var error: Error? = nil
     
-    var isPending: Bool { lastStatus == .Pending }
-    var isSuccess: Bool { lastStatus == .Success }
-    var isError: Bool { lastStatus == .Error }
+    public var isPending: Bool { lastStatus == .Pending }
+    public var isSuccess: Bool { lastStatus == .Success }
+    public var isError: Bool { lastStatus == .Error }
     
-    init(mutationKey: String, config: MutationConfig) {
+    public init(mutationKey: String, config: MutationConfig) {
         self.mutationKey = mutationKey
         self.config = config
     }
@@ -87,7 +87,7 @@ final class Mutation<TData: Codable>: ObservableObject {
         }
     }
     
-    func mutate() async throws -> TData? {
+    public func mutate() async throws -> TData? {
         guard let mutationFunction = self.mutationFunction else { return nil }
         self.lastStatus = .Pending
         

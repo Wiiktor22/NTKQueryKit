@@ -7,12 +7,12 @@
 
 import Foundation
 
-struct QueryConfig {
-    let queryFunction: DefaultQueryFunction?
-    let staleTime: Int?
-    let meta: MetaDictionary?
+public struct QueryConfig {
+    public let queryFunction: DefaultQueryFunction?
+    public let staleTime: Int?
+    public let meta: MetaDictionary?
     
-    init(
+    public init(
         queryFunction: DefaultQueryFunction? = nil,
         staleTime: Int? = nil,
         meta: MetaDictionary? = nil
