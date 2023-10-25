@@ -7,7 +7,12 @@
 
 import Foundation
 
+/// Describes the structure of error parameter
 public struct GlobalErrorParameters {
-    let error: Error
-    let meta: MetaDictionary
+    /// Stores the error.
+    public let error: Error
+    /// Provides the meta dictionary with additional info. 
+    ///
+    /// By default only `queryKey`/`mutationKey` will be passed (if it's specified).
+    public let meta: MetaDictionary
 }

@@ -8,9 +8,18 @@
 import Foundation
 
 public struct MutationConfig {
+    /// Function that performs asynchronous or synchronous task, that can return something based on its result.
+    ///
+    /// Optional since it can be passed whether via local or global configuration.
     public let mutationFunction: DefaultMutationFunction?
+    
+    /// Handler that will be fired when the mutation is successful.
     public let onSuccess: MutationSuccessHandler?
+    
+    /// Handler that will be fired if the mutation encounters an error.
     public let onError: MutationErrorHandler?
+    
+    /// Stores additional information about the mutation that can be used with error handler. By default it contains information about the `mutationKey`.
     public let meta: MetaDictionary?
     
     public init(

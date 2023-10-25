@@ -7,8 +7,12 @@
 
 import Foundation
 
+/// A protocol that defines the structure of the cache entry instance.
 public protocol QueryCacheEntry {
+    /// Automatically saves the last time when a cache entry was modified in order to validate whether the data is stale.
     var lastUpdateTime: Date { get set }
+    
+    /// Data stored in the cache entry
     var data: Codable { get set }
 }
 
