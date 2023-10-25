@@ -1,11 +1,12 @@
 //
 //  QueryValueTests.swift
-//  QueryKitPrototypeTests
+//  
 //
 //  Created by Wiktor Szlegier on 24/10/2023.
 //
 
 import XCTest
+@testable import NTKQueryKit
 import Combine
 
 @MainActor

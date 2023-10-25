@@ -1,11 +1,12 @@
 //
 //  QueryFetchingTests.swift
-//  QueryKitPrototypeTests
+//  
 //
 //  Created by Wiktor Szlegier on 24/10/2023.
 //
 
 import XCTest
+@testable import NTKQueryKit
 
 @MainActor
 final class QueryFetchingTests: XCTestCase {

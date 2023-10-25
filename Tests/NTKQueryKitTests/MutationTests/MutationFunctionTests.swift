@@ -1,6 +1,6 @@
 //
 //  MutationFunctionTests.swift
-//  QueryKitPrototypeTests
+//  
 //
 //  Created by Wiktor Szlegier on 24/10/2023.
 //
