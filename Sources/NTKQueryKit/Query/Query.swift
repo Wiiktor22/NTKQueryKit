@@ -19,14 +19,21 @@ public struct NTKQuery<TData: Codable>: DynamicProperty {
     ///     - queryKey: Query identifier (known as key) used for connecting to cache entry, accessing global settings and debugging.
     ///     - queryFunction: Function that performs a request to retrieve data. *(Optional since it can be passed whether via local or global configuration).*
     ///     - staleTime: The time in milliseconds after data is considered stale. *(Can be set locally per property wrapper or globally via config).*
+    ///     - disableInitialFetch: Option to disable automatical fetch, that is performed when query is initialized. Defaults to false.
     ///     - meta: Stores additional information about the query that can be used with error handler.
     public init(
         queryKey: String,
         queryFunction: DefaultQueryFunction? = nil,
         staleTime: Int? = nil,
+        disableInitialFetch: Bool? = nil,
         meta: MetaDictionary? = nil
     ) {
-        let config = QueryConfig(queryFunction: queryFunction, staleTime: staleTime, meta: meta)
+        let config = QueryConfig(
+            queryFunction: queryFunction,
+            staleTime: staleTime,
+            disableInitialFetch: disableInitialFetch,
+            meta: meta
+        )
         _query = StateObject(wrappedValue: Query(queryKey: queryKey, config: config))
     }
     
@@ -107,7 +114,9 @@ public class Query<TData: Codable>: ObservableObject {
         self.config = config
         
         initializeSubscription(queryKey)
-        self.fetch()
+        if (!config.disableInitialFetch) {
+            self.fetch()
+        }
     }
     
     private func initializeSubscription(_ queryKey: String) {

@@ -19,16 +19,21 @@ public struct QueryConfig {
     /// The time in milliseconds after data is considered stale. Defaults to 0.
     public let staleTime: Int?
     
+    /// Whether to disable automatical fetch, that is performed when query is initialized. Defaults to false.
+    public let disableInitialFetch: Bool
+    
     /// Stores additional information about the query that can be used with error handler. By default it contains information about the `queryKey`.
     public let meta: MetaDictionary?
     
     public init(
         queryFunction: DefaultQueryFunction? = nil,
         staleTime: Int? = nil,
+        disableInitialFetch: Bool? = nil,
         meta: MetaDictionary? = nil
     ) {
         self.queryFunction = queryFunction
         self.staleTime = staleTime
+        self.disableInitialFetch = disableInitialFetch ?? false
         self.meta = meta
     }
 }

@@ -77,6 +77,20 @@ final class QueryFetchingTests: XCTestCase {
         XCTAssertEqual(query.data, ["Manual", "Update"], "Data returned from the query instance should be equal to the one stored in cache")
     }
     
+    func testDisabledFetching() throws {
+        let exp = expectation(description: "Expect NOT to initially fetched data when this option is disabled")
+        exp.isInverted = true // NOTE: Inverted, because we expect to NOT call queryFunction
+        
+        func queryFunction() async throws -> [String] {
+            exp.fulfill()
+            return ["Disabled", "Function"]
+        }
+        
+        _ = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction, disableInitialFetch: true))
+        
+        waitForExpectations(timeout: 1)
+    }
+    
     func testFetchingWithStoredCacheAndStaleData() async throws {
         let exp = expectation(description: "When not stale data is stored in cache entry queryFunction MUST be called")
         
