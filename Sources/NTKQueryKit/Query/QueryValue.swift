@@ -9,19 +9,27 @@ import Foundation
 import SwiftUI
 import Combine
 
+/// Property wrapper that represent an interface to access cache entry's data and subscribe to its changes.
 @propertyWrapper
 public struct NTKQueryValue<TData: Codable>: DynamicProperty {
     @StateObject private var queryValueInstance: QueryValue<TData>
     
+    /// Creates a subscriber instance using the provided key.
+    ///
+    /// - Parameters:
+    ///     - queryKey: Query identifier (known as key) used to specify concrete cache entry to follow.
     public init(queryKey: String) {
         _queryValueInstance = StateObject(wrappedValue: QueryValue<TData>(queryKey: queryKey))
     }
     
+    /// The underlying data that belongs to specified cache entry.
     public var wrappedValue: TData? { queryValueInstance.data }
 }
 
+/// Represents a subscription interface to get and track data stored in the cache entry.
 @MainActor
 public class QueryValue<TData: Codable>: ObservableObject {
+    /// Data that belongs to specified cache entry.
     @Published public var data: TData? = nil
     private var cancellables: Set<AnyCancellable> = []
     

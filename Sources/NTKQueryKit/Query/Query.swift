@@ -13,6 +13,13 @@ import Combine
 public struct NTKQuery<TData: Codable>: DynamicProperty {
     @StateObject private var query: Query<TData>
     
+    /// Creates a query instance using the provided parameters as local configuration.
+    ///
+    /// - Parameters:
+    ///     - queryKey: Query identifier (known as key) used for connecting to cache entry, accessing global settings and debugging.
+    ///     - queryFunction: Function that performs a request to retrieve data. *(Optional since it can be passed whether via local or global configuration).*
+    ///     - staleTime: The time in milliseconds after data is considered stale. *(Can be set locally per property wrapper or globally via config).*
+    ///     - meta: Stores additional information about the query that can be used with error handler.
     public init(
         queryKey: String,
         queryFunction: DefaultQueryFunction? = nil,
@@ -23,9 +30,11 @@ public struct NTKQuery<TData: Codable>: DynamicProperty {
         _query = StateObject(wrappedValue: Query(queryKey: queryKey, config: config))
     }
     
+    /// The underlying query instance created by the wrapper.
     public var wrappedValue: Query<TData> { query }
 }
 
+/// Represents an operation that fetches and retrieves data from a specified data source, such as API or database.
 @MainActor
 public class Query<TData: Codable>: ObservableObject {
     // MARK: Query - Properties
@@ -36,13 +45,25 @@ public class Query<TData: Codable>: ObservableObject {
     private let queryKey: String
     private let config: QueryConfig
     
+    /// Indicates whether a query was fetched at least once, not considering the result.
     @Published public var isFetched = false
+    
+    /// Status that represent last known result of the particular query.
     @Published public var lastStatus: QueryStatus = .Loading
+    
+    /// Data stored in the cache entry identified by provided key.
     @Published public var data: TData? = nil
+    
+    /// Error that was encountered during the query usage.
     @Published public var error: Error? = nil
     
+    /// Indactes if the current status of mutation is `.Loading`.
     public var isLoading: Bool { lastStatus == .Loading }
+    
+    /// Indactes if the current status of mutation is `.Success`.
     public var isSuccess: Bool { lastStatus == .Success }
+    
+    /// Indactes if the current status of mutation is `.Error`.
     public var isError: Bool { lastStatus == .Error }
     
     private var queryFunction: DefaultQueryFunction? {
@@ -185,16 +206,14 @@ public class Query<TData: Codable>: ObservableObject {
         fetchAssignDistrubuteAndSaveData(queryKey, queryFunction, staleTime)
     }
     
+    /// Allows to manually refetch provided `queryFunction`.
+    ///
+    /// Once the query fetches new data, it's provided to all other listeners and potentially can be stored in the cache.
     public func refetch() {
         guard let queryFunction = self.queryFunction else { return }
         self.lastStatus = .Loading
         
         fetchAssignDistrubuteAndSaveData(queryKey, queryFunction, staleTime)
-        
-        // NOTE: Only for testing!
-//        let newData = ["Testing", "Query", "Wiktor"] as! TData
-//        distributeUpdatedDataAndStatus(queryKey, (newData, .Success))
-//        saveNewDataInCache(queryKey, newData)
     }
     
 //    deinit {

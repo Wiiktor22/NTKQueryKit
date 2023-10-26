@@ -1,6 +1,6 @@
 # ``NTKQueryKit/NTKMutation``
 
-Property wrapper that represent an interface to use mutation.
+Property wrapper that represents an interface to use mutation.
 
 ## Overview
 
