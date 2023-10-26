@@ -7,6 +7,9 @@
 
 import Foundation
 
+/// Describes the structure of available configuration options for the mutation.
+///
+/// It can be used as a local and global configuration.
 public struct MutationConfig {
     /// Function that performs asynchronous or synchronous task, that can return something based on its result.
     ///

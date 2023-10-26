@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-public struct QueryPublisherMessage {
+struct QueryPublisherMessage {
     let data: Codable?
     let status: QueryStatus
 }

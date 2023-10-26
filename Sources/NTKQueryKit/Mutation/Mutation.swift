@@ -12,33 +12,54 @@ import SwiftUI
 public struct NTKMutation<TData: Codable>: DynamicProperty {
     @StateObject var mutation: Mutation<TData>
     
+    /// Creates a mutation instance using the provided parameters as local configuration.
+    ///
+    /// - Parameters:
+    ///     - mutationKey: Mutation identifier used for accessing global settings or debugging.
+    ///     - mutationFunction: Function that performs asynchronous or synchronous task, that can return something based on its result. *(Optional since it can be passed whether via local or global configuration).*
+    ///     - onSuccess: Handler that will be fired when the mutation is successful.
+    ///     - onError: Handler that will be fired if the mutation encounters an error.
+    ///     - meta: Stores additional information about the mutation that can be used with error handler.
     public init(
         mutationKey: String,
         mutationFunction: MutationFunction<TData>? = nil,
         onSuccess: MutationSuccessHandler? = nil,
-        onError: MutationErrorHandler? = nil, meta: MetaDictionary? = nil
+        onError: MutationErrorHandler? = nil, 
+        meta: MetaDictionary? = nil
     ) {
         let config = MutationConfig(mutationFunction: mutationFunction, onSuccess: onSuccess, onError: onError, meta: meta)
         _mutation = StateObject(wrappedValue: Mutation<TData>(mutationKey: mutationKey, config: config))
     }
     
+    /// The underlying mutation instance created by the wrapper.
     public var wrappedValue: Mutation<TData> { mutation }
 }
 
+/// Represents an operation that will modify server-side data and then potentially updates the client's cache based on the result.
 @MainActor
 public final class Mutation<TData: Codable>: ObservableObject {
     private let mutationKey: String
     private var config: MutationConfig
     
+    /// Status that represent last known result of the particular mutation.
     @Published public var lastStatus: MutationStatus = .ReadyToUse
+    
+    /// Data returned from the provided `mutationFunction`.
     @Published public var data: TData? = nil
+    
+    /// Error that was encountered during the mutation usage.
     @Published public var error: Error? = nil
     
+    /// Indactes if the current status of mutation is `.Pending`.
     public var isPending: Bool { lastStatus == .Pending }
+    
+    /// Indactes if the current status of mutation is `.Success`.
     public var isSuccess: Bool { lastStatus == .Success }
+    
+    /// Indactes if the current status of mutation is `.Error`.
     public var isError: Bool { lastStatus == .Error }
     
-    public init(mutationKey: String, config: MutationConfig) {
+    init(mutationKey: String, config: MutationConfig) {
         self.mutationKey = mutationKey
         self.config = config
     }
@@ -87,6 +108,11 @@ public final class Mutation<TData: Codable>: ObservableObject {
         }
     }
     
+    /// Mutation function that can be called.
+    ///
+    /// If `mutationFunction` can't be found mutation won't be called.
+    ///
+    /// Returns: [Optionally] The data from the provided `mutationFunction`
     public func mutate() async throws -> TData? {
         guard let mutationFunction = self.mutationFunction else { return nil }
         self.lastStatus = .Pending

@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// Describes the structure of possible configuration for the query.
+/// Describes the structure of available configuration options for the query.
 ///
 /// It can be used as a local and global configuration.
 public struct QueryConfig {
