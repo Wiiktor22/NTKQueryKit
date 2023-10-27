@@ -1,6 +1,6 @@
 # ``NTKQueryKit``
 
-A comprehensive server-state management framework, that enables to manage efficiently data-fetching with automatic caching.
+A comprehensive server-state management framework for SwiftUI applications, that enables to manage efficiently data-fetching with automatic caching.
 
 ## Overview
 
