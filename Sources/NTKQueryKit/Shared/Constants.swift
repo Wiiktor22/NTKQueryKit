@@ -39,9 +39,9 @@ public enum MutationStatus {
 }
 
 /// A type representing fundamental constraints of a mutation function.
-public typealias DefaultMutationFunction = () async throws -> Codable?
+public typealias DefaultMutationFunction<TParam> = (_ param: TParam) async throws -> Codable
 /// A type representing mutation function with generic response type.
-public typealias MutationFunction<TData: Codable> = () async throws -> TData?
+public typealias MutationFunction<TParam, TData> = (_ param: TParam) async throws -> TData
 
 /// A type representing `onSuccess` handler used within mutations.
 public typealias MutationSuccessHandler = (_ data: Codable) -> Void
@@ -49,7 +49,7 @@ public typealias MutationSuccessHandler = (_ data: Codable) -> Void
 public typealias MutationErrorHandler = (_ error: GlobalErrorParameters) -> Void
 
 /// A type representing dictionary (used for applying global config) that contains `mutationKey` and ``MutationConfig``.
-public typealias MutationsConfigDictionary = [String: MutationConfig]
+public typealias MutationsConfigDictionary = [String: Any]
 
 // MARK: Shared
 
