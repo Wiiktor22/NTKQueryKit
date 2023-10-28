@@ -9,8 +9,8 @@ import Foundation
 import SwiftUI
 
 @propertyWrapper
-public struct NTKMutation<TData: Codable, TParameter>: DynamicProperty {
-    @StateObject var mutation: Mutation<TData, TParameter>
+public struct NTKMutation<TParameter, TData: Codable>: DynamicProperty {
+    @StateObject var mutation: Mutation<TParameter, TData>
     
     /// Creates a mutation instance using the provided parameters as local configuration.
     ///
@@ -22,33 +22,22 @@ public struct NTKMutation<TData: Codable, TParameter>: DynamicProperty {
     ///     - meta: Stores additional information about the mutation that can be used with error handler.
     public init(
         mutationKey: String,
-        mutationFunction: MutationFunction<TData>? = nil,
-        onSuccess: MutationSuccessHandler? = nil,
-        onError: MutationErrorHandler? = nil, 
-        meta: MetaDictionary? = nil
-    ) {
-        let config = MutationConfig<TParameter>(mutationFunction: mutationFunction, onSuccess: onSuccess, onError: onError, meta: meta)
-        _mutation = StateObject(wrappedValue: Mutation<TData, TParameter>(mutationKey: mutationKey, config: config))
-    }
-    
-    public init(
-        mutationKey: String,
-        mutationFunction: MutationFunctionWithParam<TParameter, TData>? = nil,
+        mutationFunction: MutationFunction<TParameter, TData>? = nil,
         onSuccess: MutationSuccessHandler? = nil,
         onError: MutationErrorHandler? = nil,
         meta: MetaDictionary? = nil
     ) {
         let config = MutationConfig<TParameter>(mutationFunction: mutationFunction, onSuccess: onSuccess, onError: onError, meta: meta)
-        _mutation = StateObject(wrappedValue: Mutation<TData, TParameter>(mutationKey: mutationKey, config: config))
+        _mutation = StateObject(wrappedValue: Mutation<TParameter, TData>(mutationKey: mutationKey, config: config))
     }
     
     /// The underlying mutation instance created by the wrapper.
-    public var wrappedValue: Mutation<TData, TParameter> { mutation }
+    public var wrappedValue: Mutation<TParameter, TData> { mutation }
 }
 
 /// Represents an operation that will modify server-side data and then potentially updates the client's cache based on the result.
 @MainActor
-public final class Mutation<TData: Codable, TParameter>: ObservableObject {
+public final class Mutation<TParameter, TData: Codable>: ObservableObject {
     private let mutationKey: String
     private var config: MutationConfig<TParameter>
     
@@ -75,11 +64,12 @@ public final class Mutation<TData: Codable, TParameter>: ObservableObject {
         self.config = config
     }
     
-    private var mutationFunction: DefaultMutationFunction? {
+    private var mutationFunction: DefaultMutationFunction<TParameter>? {
         if let localMutationFunction = self.config.mutationFunction {
             return localMutationFunction
         } else {
-            return NTKQueryGlobalConfig.shared.mutationsConfig[self.mutationKey]?.mutationFunction
+            let config = NTKQueryGlobalConfig.shared.mutationsConfig[self.mutationKey] as? MutationConfig<TParameter>
+            return config?.mutationFunction
         }
     }
     
@@ -87,14 +77,15 @@ public final class Mutation<TData: Codable, TParameter>: ObservableObject {
         if let localOnSuccess = self.config.onSuccess {
             return localOnSuccess
         } else {
-            return NTKQueryGlobalConfig.shared.mutationsConfig[self.mutationKey]?.onSuccess
+            let config = NTKQueryGlobalConfig.shared.mutationsConfig[self.mutationKey] as? MutationConfig<TParameter>
+            return config?.onSuccess
         }
     }
     
     private var onError: MutationErrorHandler? {
         if let localOnError = self.config.onError {
             return localOnError
-        } else if let localOnErrorFromConfig = NTKQueryGlobalConfig.shared.mutationsConfig[self.mutationKey]?.onError {
+        } else if let localOnErrorFromConfig = (NTKQueryGlobalConfig.shared.mutationsConfig[self.mutationKey] as? MutationConfig<TParameter>)?.onError {
             return localOnErrorFromConfig
         } else {
             return NTKQueryGlobalConfig.shared.globalOnErrorMutation
@@ -105,7 +96,8 @@ public final class Mutation<TData: Codable, TParameter>: ObservableObject {
         if let localMeta = self.config.meta {
             return localMeta
         } else {
-            return NTKQueryGlobalConfig.shared.mutationsConfig[mutationKey]?.meta
+            let config = NTKQueryGlobalConfig.shared.mutationsConfig[self.mutationKey] as? MutationConfig<TParameter>
+            return config?.meta
         }
     }
     
@@ -124,43 +116,8 @@ public final class Mutation<TData: Codable, TParameter>: ObservableObject {
     /// If `mutationFunction` can't be found mutation won't be called.
     ///
     /// Returns: [Optionally] The data from the provided `mutationFunction`
-//    public func mutate() async throws -> TData? {
-//        guard let mutationFunction = self.mutationFunction else { return nil }
-//        self.lastStatus = .Pending
-//        
-//        do {
-//            // NOTE: Risky line below, not sure if TData assertion will be correct each time
-//            let data = try await mutationFunction() as? TData
-//            
-//            self.lastStatus = .Success
-//            self.data = data
-//            if (self.error != nil) { self.error = nil }
-//            
-//            if let onSuccess = self.onSuccess {
-//                onSuccess(data)
-//            }
-//            
-//            return data
-//        } catch let error {
-//            self.lastStatus = .Error
-//            if (self.data != nil) { self.data = nil }
-//            self.error = error
-//            
-//            if let onError = self.onError {
-//                onError(GlobalErrorParameters(error: error, meta: buildMetaDictonary()))
-//            }
-//            
-//            return nil
-//        }
-//    }
-    
-    /// Mutation function that can be called.
-    ///
-    /// If `mutationFunction` can't be found mutation won't be called.
-    ///
-    /// Returns: [Optionally] The data from the provided `mutationFunction`
     public func mutate(_ parameter: TParameter = ()) async throws -> TData? {
-        guard let mutationFunction = self.config.mutationFunctionWithParam else { return nil }
+        guard let mutationFunction = self.mutationFunction else { return nil }
         self.lastStatus = .Pending
         
         do {

@@ -29,7 +29,7 @@ final class MutationFunctionTests: XCTestCase {
             return ["Local", "Mutation"]
         }
         
-        let mutation = Mutation<[String]>(
+        let mutation = Mutation<Void, [String]>(
             mutationKey: testingMutationKey,
             config: MutationConfig(mutationFunction: localMutationFunction)
         )
@@ -38,6 +38,24 @@ final class MutationFunctionTests: XCTestCase {
         
         await fulfillment(of: [exp], timeout: 1)
         XCTAssertEqual(mutation.data, ["Local", "Mutation"])
+    }
+    
+    func testAccessingLocalMutationFunctionWithParameters() async throws {
+        let exp = expectation(description: "Local mutationFunction was called in case it is the only one that is passed")
+        func localMutationFunction(_ param: [String]) -> [String] {
+            exp.fulfill()
+            return ["Local", "Mutation"] + param
+        }
+        
+        let mutation = Mutation<[String], [String]>(
+            mutationKey: testingMutationKey,
+            config: MutationConfig(mutationFunction: localMutationFunction)
+        )
+        
+        _ = try? await mutation.mutate(["With", "Parameters"])
+        
+        await fulfillment(of: [exp], timeout: 1)
+        XCTAssertEqual(mutation.data, ["Local", "Mutation", "With", "Parameters"])
     }
     
     func testAccessingGlobalMutationFunction() async throws {
@@ -51,7 +69,7 @@ final class MutationFunctionTests: XCTestCase {
         let mutationsConfig = [testingMutationKey: MutationConfig(mutationFunction: globalMutationFunction)]
         NTKQueryGlobalConfig.shared.initializeWithConfiguration(mutationsConfig: mutationsConfig)
         
-        let mutation = Mutation<[String]>(
+        let mutation = Mutation<Void, [String]>(
             mutationKey: testingMutationKey,
             config: MutationConfig()
         )
@@ -60,6 +78,28 @@ final class MutationFunctionTests: XCTestCase {
         
         await fulfillment(of: [exp], timeout: 1)
         XCTAssertEqual(mutation.data, ["Global", "Mutation"])
+    }
+    
+    func testAccessingGlobalMutationFunctionWithParameters() async throws {
+        let exp = expectation(description: "Global mutationFunction was called in case when there is no local")
+        
+        func globalMutationFunction(_ param: [String]) -> [String] {
+            exp.fulfill()
+            return ["Global", "Mutation"] + param
+        }
+        
+        let mutationsConfig = [testingMutationKey: MutationConfig(mutationFunction: globalMutationFunction)]
+        NTKQueryGlobalConfig.shared.initializeWithConfiguration(mutationsConfig: mutationsConfig)
+        
+        let mutation = Mutation<[String], [String]>(
+            mutationKey: testingMutationKey,
+            config: MutationConfig(mutationFunction: globalMutationFunction)
+        )
+        
+        _ = try? await mutation.mutate(["With", "Parameters"])
+        
+        await fulfillment(of: [exp], timeout: 1)
+        XCTAssertEqual(mutation.data, ["Global", "Mutation", "With", "Parameters"])
     }
 
     func testAccessingMutationFunctionWithLocalAndGlobal() async throws {
@@ -77,7 +117,7 @@ final class MutationFunctionTests: XCTestCase {
         let mutationsConfig = [testingMutationKey: MutationConfig(mutationFunction: globalMutationFunction)]
         NTKQueryGlobalConfig.shared.initializeWithConfiguration(mutationsConfig: mutationsConfig)
         
-        let mutation = Mutation<[String]>(
+        let mutation = Mutation<Void, [String]>(
             mutationKey: testingMutationKey,
             config: MutationConfig(mutationFunction: localMutationFunction)
         )

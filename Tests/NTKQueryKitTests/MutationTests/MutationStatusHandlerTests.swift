@@ -35,7 +35,7 @@ final class MutationStatusHandlerTests: XCTestCase {
             exp.fulfill()
         }
         
-        let mutation = Mutation<[String]>(
+        let mutation = Mutation<Void, [String]>(
             mutationKey: testingMutationKey,
             config: MutationConfig(mutationFunction: successMutation, onSuccess: localOnSuccess)
         )
@@ -53,10 +53,10 @@ final class MutationStatusHandlerTests: XCTestCase {
             exp.fulfill()
         }
         
-        let mutationsConfig = [testingMutationKey: MutationConfig(onSuccess: globalOnSuccess)]
+        let mutationsConfig = [testingMutationKey: MutationConfig<Void>(onSuccess: globalOnSuccess)]
         NTKQueryGlobalConfig.shared.initializeWithConfiguration(mutationsConfig: mutationsConfig)
         
-        let mutation = Mutation<[String]>(
+        let mutation = Mutation<Void, [String]>(
             mutationKey: testingMutationKey,
             config: MutationConfig(mutationFunction: successMutation)
         )
@@ -77,10 +77,10 @@ final class MutationStatusHandlerTests: XCTestCase {
             XCTFail("Global onSucess was called")
         }
         
-        let mutationsConfig = [testingMutationKey: MutationConfig(onSuccess: globalOnSuccess)]
+        let mutationsConfig = [testingMutationKey: MutationConfig<Void>(onSuccess: globalOnSuccess)]
         NTKQueryGlobalConfig.shared.initializeWithConfiguration(mutationsConfig: mutationsConfig)
         
-        let mutation = Mutation<[String]>(
+        let mutation = Mutation<Void, [String]>(
             mutationKey: testingMutationKey,
             config: MutationConfig(mutationFunction: successMutation, onSuccess: localOnSuccess)
         )
@@ -104,7 +104,7 @@ final class MutationStatusHandlerTests: XCTestCase {
             exp.fulfill()
         }
         
-        let mutation = Mutation<[String]>(
+        let mutation = Mutation<Void, [String]>(
             mutationKey: testingMutationKey,
             config: MutationConfig(mutationFunction: errorMutation, onError: localOnError)
         )
@@ -122,10 +122,10 @@ final class MutationStatusHandlerTests: XCTestCase {
             exp.fulfill()
         }
         
-        let mutationsConfig = [testingMutationKey: MutationConfig(onError: globalOnError)]
+        let mutationsConfig = [testingMutationKey: MutationConfig<Void>(onError: globalOnError)]
         NTKQueryGlobalConfig.shared.initializeWithConfiguration(mutationsConfig: mutationsConfig)
         
-        let mutation = Mutation<[String]>(
+        let mutation = Mutation<Void, [String]>(
             mutationKey: testingMutationKey,
             config: MutationConfig(mutationFunction: errorMutation)
         )
@@ -146,10 +146,10 @@ final class MutationStatusHandlerTests: XCTestCase {
             XCTFail("Global onError was called")
         }
         
-        let mutationsConfig = [testingMutationKey: MutationConfig(onError: globalOnError)]
+        let mutationsConfig = [testingMutationKey: MutationConfig<Void>(onError: globalOnError)]
         NTKQueryGlobalConfig.shared.initializeWithConfiguration(mutationsConfig: mutationsConfig)
         
-        let mutation = Mutation<[String]>(
+        let mutation = Mutation<Void, [String]>(
             mutationKey: testingMutationKey,
             config: MutationConfig(mutationFunction: errorMutation, onError: localOnError)
         )

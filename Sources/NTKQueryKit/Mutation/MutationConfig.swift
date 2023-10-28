@@ -14,9 +14,7 @@ public struct MutationConfig<TParameter> {
     /// Function that performs asynchronous or synchronous task, that can return something based on its result.
     ///
     /// Optional since it can be passed whether via local or global configuration.
-    public let mutationFunction: DefaultMutationFunction?
-    
-    public let mutationFunctionWithParam: DefaultMutationFunctionWithParam<TParameter>?
+    public let mutationFunction: DefaultMutationFunction<TParameter>?
     
     /// Handler that will be fired when the mutation is successful.
     public let onSuccess: MutationSuccessHandler?
@@ -28,27 +26,12 @@ public struct MutationConfig<TParameter> {
     public let meta: MetaDictionary?
     
     public init(
-        mutationFunction: DefaultMutationFunction? = nil,
+        mutationFunction: DefaultMutationFunction<TParameter>? = nil,
         onSuccess: MutationSuccessHandler? = nil,
         onError: MutationErrorHandler? = nil,
         meta: MetaDictionary? = nil
     ) {
         self.mutationFunction = mutationFunction
-        self.mutationFunctionWithParam = nil
-        self.onSuccess = onSuccess
-        self.onError = onError
-        self.meta = meta
-    }
-    
-    public init(
-        mutationFunction: DefaultMutationFunctionWithParam<TParameter>? = nil,
-        onSuccess: MutationSuccessHandler? = nil,
-        onError: MutationErrorHandler? = nil,
-        meta: MetaDictionary? = nil
-    ) {
-        self.mutationFunction = nil
-        self.mutationFunctionWithParam = mutationFunction
-        
         self.onSuccess = onSuccess
         self.onError = onError
         self.meta = meta
