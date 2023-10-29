@@ -115,7 +115,9 @@ public class Query<TData: Codable>: ObservableObject {
         
         initializeSubscription(queryKey)
         if (!config.disableInitialFetch) {
-            self.fetch()
+            Task {
+                await self.fetch()
+            }
         }
     }
     
@@ -175,6 +177,7 @@ public class Query<TData: Codable>: ObservableObject {
     
     private func fetchAssignDistrubuteAndSaveData(_ queryKey: String, _ queryFunction: @escaping DefaultQueryFunction, _ staleTime: Int) {
         Task {
+            print("fetchAssignDistrubuteAndSaveData")
             let queryPublisherMessageContent = await fetchAndAssignData(queryKey, queryFunction)
             
             distributeUpdatedDataAndStatus(queryKey, queryPublisherMessageContent)
@@ -187,7 +190,7 @@ public class Query<TData: Codable>: ObservableObject {
         }
     }
     
-    private func fetch() {
+    private func fetch() async {
         /**
             Scenarios:
                 - empty cache:
@@ -212,7 +215,12 @@ public class Query<TData: Codable>: ObservableObject {
             }
         }
         
-        fetchAssignDistrubuteAndSaveData(queryKey, queryFunction, staleTime)
+        let isUniqueRequest = await ActiveQueriesManager.shared.tryToAddActiveQuery(queryKey)
+        
+        if (isUniqueRequest) {
+            fetchAssignDistrubuteAndSaveData(queryKey, queryFunction, staleTime)
+            await ActiveQueriesManager.shared.removeActiveQuery(queryKey)
+        }
     }
     
     /// Allows to manually refetch provided `queryFunction`.
