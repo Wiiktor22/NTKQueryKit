@@ -11,20 +11,18 @@ import Foundation
 ///
 /// It can be used as a local and global configuration.
 public struct MutationConfig<TParameter> {
-    /// Function that performs asynchronous or synchronous task, that can return something based on its result.
+    let mutationFunction: DefaultMutationFunction<TParameter>?
+    let onSuccess: MutationSuccessHandler?
+    let onError: MutationErrorHandler?
+    let meta: MetaDictionary?
+    
+    /// Creates a configuration used to specify settings for mutation.
     ///
-    /// Optional since it can be passed whether via local or global configuration.
-    public let mutationFunction: DefaultMutationFunction<TParameter>?
-    
-    /// Handler that will be fired when the mutation is successful.
-    public let onSuccess: MutationSuccessHandler?
-    
-    /// Handler that will be fired if the mutation encounters an error.
-    public let onError: MutationErrorHandler?
-    
-    /// Stores additional information about the mutation that can be used with error handler. By default it contains information about the `mutationKey`.
-    public let meta: MetaDictionary?
-    
+    /// - Parameters:
+    ///     - mutationFunction: Function that performs asynchronous or synchronous task, that can return something based on its result. *(Optional since it can be passed whether via local or global configuration).*
+    ///     - onSuccess: Handler that will be fired when the mutation is successful.
+    ///     - onError: Handler that will be fired if the mutation encounters an error.
+    ///     - meta: Stores additional information about the mutation that can be used with error handler. By default it contains information about the `mutationKey`.
     public init(
         mutationFunction: DefaultMutationFunction<TParameter>? = nil,
         onSuccess: MutationSuccessHandler? = nil,
