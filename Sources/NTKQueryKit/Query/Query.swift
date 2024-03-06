@@ -10,8 +10,8 @@ import SwiftUI
 import Combine
 
 @propertyWrapper
-public struct NTKQuery<TData: Codable>: DynamicProperty {
-    @StateObject private var query: Query<TData>
+public struct NTKQuery<TFetchedData: Codable, TSelectedData: Codable>: DynamicProperty {
+    @StateObject private var query: Query<TFetchedData, TSelectedData>
     
     /// Creates a query instance using the provided parameters as local configuration.
     ///
@@ -23,8 +23,9 @@ public struct NTKQuery<TData: Codable>: DynamicProperty {
     ///     - meta: Stores additional information about the query that can be used with error handler.
     public init(
         queryKey: String,
-        queryFunction: QueryFunction<TData>? = nil,
+        queryFunction: QueryFunction<TFetchedData>? = nil,
         staleTime: Int? = nil,
+        select: QuerySelector<TFetchedData, TSelectedData>? = nil,
         disableInitialFetch: Bool? = nil,
         meta: MetaDictionary? = nil
     ) {
@@ -34,23 +35,25 @@ public struct NTKQuery<TData: Codable>: DynamicProperty {
             disableInitialFetch: disableInitialFetch,
             meta: meta
         )
-        _query = StateObject(wrappedValue: Query<TData>(queryKey: queryKey, config: config))
+        _query = StateObject(wrappedValue: Query<TFetchedData, TSelectedData>(queryKey: queryKey, select: select ?? { (_ data: TFetchedData) in data as! TSelectedData } , config: config))
     }
     
     /// The underlying query instance created by the wrapper.
-    public var wrappedValue: Query<TData> { query }
+    public var wrappedValue: Query<TFetchedData, TSelectedData> { query }
 }
 
 /// Represents an operation that fetches and retrieves data from a specified data source, such as API or database.
 @MainActor
-public class Query<TData: Codable>: ObservableObject {
+public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObject {
     // MARK: Query - Properties
     
-    private typealias QueryPublisherMessageContent = (data: TData?, status: QueryStatus)
+    private typealias QueryPublisherMessageContent = (data: TFetchedData?, status: QueryStatus)
     private var cancellables: Set<AnyCancellable> = []
     
     private let queryKey: String
     private let config: QueryConfig
+    
+    private let select: QuerySelector<TFetchedData, TSelectedData>
     
     /// Indicates whether a query was fetched at least once, not considering the result.
     @Published public var isFetched = false
@@ -59,7 +62,7 @@ public class Query<TData: Codable>: ObservableObject {
     @Published public var lastStatus: QueryStatus = .Loading
     
     /// Data stored in the cache entry identified by provided key.
-    @Published public var data: TData? = nil
+    @Published public var data: TSelectedData? = nil
     
     /// Error that was encountered during the query usage.
     @Published public var error: Error? = nil
@@ -109,8 +112,9 @@ public class Query<TData: Codable>: ObservableObject {
     
     // MARK: Query - Initialization
     
-    init(queryKey: String, config: QueryConfig) {
+    init(queryKey: String, select: @escaping QuerySelector<TFetchedData, TSelectedData>, config: QueryConfig) {
         self.queryKey = queryKey
+        self.select = select
         self.config = config
         
         initializeSubscription(queryKey)
@@ -126,7 +130,7 @@ public class Query<TData: Codable>: ObservableObject {
             .sink { [weak self] message in
                 self?.lastStatus = message.status
                 if let data = message.data {
-                    self?.data = data as? TData
+                    self?.data = self?.select(data as! TFetchedData)
                 }
             }
             .store(in: &cancellables)
@@ -134,7 +138,7 @@ public class Query<TData: Codable>: ObservableObject {
     
     // MARK: Query - Fetching and cache interactions related methods
     
-    private func saveNewDataInCache(_ queryKey: String, _ data: TData) {
+    private func saveNewDataInCache(_ queryKey: String, _ data: TFetchedData) {
         QueryCache.shared.overrideCacheEntry(key: queryKey, value: data)
     }
     
@@ -152,7 +156,8 @@ public class Query<TData: Codable>: ObservableObject {
     private func fetchAndAssignData(_ queryKey: String, _ queryFunction: @escaping DefaultQueryFunction) async -> QueryPublisherMessageContent {
         do {
             // NOTE: Risky line below, not sure if TData assertion will be correct each time
-            let data = try await queryFunction() as? TData
+            let fetchedData = try await queryFunction() as! TFetchedData
+            let data = self.select(fetchedData)
             
             self.data = data
             if (self.error != nil) { self.error = nil }
@@ -160,7 +165,7 @@ public class Query<TData: Codable>: ObservableObject {
             let status: QueryStatus = .Success
             markQueryAsFetched(withStatus: status)
             
-            return (data, status)
+            return (fetchedData, status)
         } catch let error {
             self.error = error
             
@@ -208,7 +213,7 @@ public class Query<TData: Codable>: ObservableObject {
             let now = Date()
             if (now < cacheEntry.lastUpdateTime + Double(staleTime / 1000)) {
                 Task {
-                    self.data = cacheEntry.data as? TData
+                    self.data = self.select(cacheEntry.data as! TFetchedData)
                     markQueryAsFetched(withStatus: .Success)
                 }
                 return
