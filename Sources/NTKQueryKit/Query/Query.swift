@@ -23,7 +23,7 @@ public struct NTKQuery<TData: Codable>: DynamicProperty {
     ///     - meta: Stores additional information about the query that can be used with error handler.
     public init(
         queryKey: String,
-        queryFunction: DefaultQueryFunction? = nil,
+        queryFunction: QueryFunction<TData>? = nil,
         staleTime: Int? = nil,
         disableInitialFetch: Bool? = nil,
         meta: MetaDictionary? = nil
@@ -34,7 +34,7 @@ public struct NTKQuery<TData: Codable>: DynamicProperty {
             disableInitialFetch: disableInitialFetch,
             meta: meta
         )
-        _query = StateObject(wrappedValue: Query(queryKey: queryKey, config: config))
+        _query = StateObject(wrappedValue: Query<TData>(queryKey: queryKey, config: config))
     }
     
     /// The underlying query instance created by the wrapper.
