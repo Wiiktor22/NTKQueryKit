@@ -35,7 +35,11 @@ public struct NTKQuery<TFetchedData: Codable, TSelectedData: Codable>: DynamicPr
             disableInitialFetch: disableInitialFetch,
             meta: meta
         )
-        _query = StateObject(wrappedValue: Query<TFetchedData, TSelectedData>(queryKey: queryKey, select: select ?? { (_ data: TFetchedData) in data as! TSelectedData } , config: config))
+        _query = StateObject(wrappedValue: Query<TFetchedData, TSelectedData>(
+            queryKey: queryKey,
+            select: select ?? { (_ data: TFetchedData) in data as! TSelectedData },
+            config: config
+        ))
     }
     
     /// The underlying query instance created by the wrapper.
@@ -128,9 +132,16 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
     private func initializeSubscription(_ queryKey: String) {
         QueryInternalPublishersManager.shared.getPublisher(forKey: queryKey)
             .sink { [weak self] message in
-                self?.lastStatus = message.status
-                if let data = message.data {
-                    self?.data = self?.select(data as! TFetchedData)
+                guard let data = message.data as? TFetchedData else { return }
+                
+                if let equatableCurrentData = self?.data as? any Equatable, let equatableNewData = self?.select(data) as? any Equatable {
+                    if !equatableCurrentData.isEqualTo(equatableNewData) {
+                        self?.lastStatus = message.status
+                        self?.data = equatableNewData as? TSelectedData
+                    }
+                } else {
+                    self?.lastStatus = message.status
+                    self?.data = self?.select(data)
                 }
             }
             .store(in: &cancellables)
@@ -182,7 +193,6 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
     
     private func fetchAssignDistrubuteAndSaveData(_ queryKey: String, _ queryFunction: @escaping DefaultQueryFunction, _ staleTime: Int) {
         Task {
-            print("fetchAssignDistrubuteAndSaveData")
             let queryPublisherMessageContent = await fetchAndAssignData(queryKey, queryFunction)
             
             distributeUpdatedDataAndStatus(queryKey, queryPublisherMessageContent)
