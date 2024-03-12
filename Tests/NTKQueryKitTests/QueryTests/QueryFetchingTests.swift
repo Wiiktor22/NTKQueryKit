@@ -31,7 +31,7 @@ final class QueryFetchingTests: XCTestCase {
             return ["Query", "Function"]
         }
         
-        _ = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction))
+        _ = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction))
         
         waitForExpectations(timeout: 1)
         
@@ -48,7 +48,7 @@ final class QueryFetchingTests: XCTestCase {
             return ["Query", "Function"]
         }
         
-        _ = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction, staleTime: 3000))
+        _ = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction, staleTime: 3000))
         
         waitForExpectations(timeout: 1)
         
@@ -68,7 +68,7 @@ final class QueryFetchingTests: XCTestCase {
             return ["Query", "Function"]
         }
         
-        let query = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction, staleTime: 10000))
+        let query = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction, staleTime: 10000))
         
         waitForExpectations(timeout: 1)
         
@@ -86,7 +86,7 @@ final class QueryFetchingTests: XCTestCase {
             return ["Disabled", "Function"]
         }
         
-        _ = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction, disableInitialFetch: true))
+        _ = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction, disableInitialFetch: true))
         
         waitForExpectations(timeout: 1)
     }
@@ -103,7 +103,7 @@ final class QueryFetchingTests: XCTestCase {
             exp.fulfill()
             return ["Query", "Function"]
         }
-        let query = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction, staleTime: 250))
+        let query = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction, staleTime: 250))
         
         await fulfillment(of: [exp], timeout: 1000)
         
@@ -130,7 +130,7 @@ final class QueryFetchingTests: XCTestCase {
             }
         }
         
-        let query = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction))
+        let query = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction))
         wait(for: [fetchExp], timeout: 1)
         
         query.refetch()
@@ -157,7 +157,7 @@ final class QueryFetchingTests: XCTestCase {
             }
         }
         
-        let query = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction, staleTime: 10000))
+        let query = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction, staleTime: 10000))
         wait(for: [fetchExp], timeout: 1)
         
         query.refetch()

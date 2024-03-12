@@ -37,8 +37,8 @@ public struct NTKQuery<TFetchedData: Codable, TSelectedData: Codable>: DynamicPr
         )
         _query = StateObject(wrappedValue: Query<TFetchedData, TSelectedData>(
             queryKey: queryKey,
-            select: select ?? { (_ data: TFetchedData) in data as! TSelectedData },
-            config: config
+            config: config,
+            select: select
         ))
     }
     
@@ -116,9 +116,9 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
     
     // MARK: Query - Initialization
     
-    init(queryKey: String, select: @escaping QuerySelector<TFetchedData, TSelectedData>, config: QueryConfig) {
+    init(queryKey: String, config: QueryConfig, select: QuerySelector<TFetchedData, TSelectedData>? = nil) {
         self.queryKey = queryKey
-        self.select = select
+        self.select = select ?? { (_ data: TFetchedData) in data as! TSelectedData }
         self.config = config
         
         initializeSubscription(queryKey)

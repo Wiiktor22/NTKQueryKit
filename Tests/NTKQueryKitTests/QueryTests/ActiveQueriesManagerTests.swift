@@ -39,9 +39,9 @@ final class ActiveQueriesManagerTests: XCTestCase {
             return ["Third", "Query"]
         }
         
-        let firstQuery = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: firstQueryFunction))
-        let secondQuery = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: secondQueryFunction))
-        let thirdQuery = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: thirdQueryFunction))
+        let firstQuery = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: firstQueryFunction))
+        let secondQuery = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: secondQueryFunction))
+        let thirdQuery = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: thirdQueryFunction))
         
         waitForExpectations(timeout: 1)
         

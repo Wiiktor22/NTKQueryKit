@@ -33,7 +33,7 @@ final class QueryGlobalErrorTests: XCTestCase {
         func throwingQueryFunction() throws -> [String] {
             throw TestingErrors.Standard
         }
-        _ = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: throwingQueryFunction))
+        _ = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: throwingQueryFunction))
         
         waitForExpectations(timeout: 1)
     }
@@ -57,7 +57,7 @@ final class QueryGlobalErrorTests: XCTestCase {
             throw TestingErrors.Standard
         }
         let meta = ["testingMessage": testingMessage]
-        _ = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: throwingQueryFunction, meta: meta))
+        _ = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: throwingQueryFunction, meta: meta))
         
         waitForExpectations(timeout: 1)
     }
@@ -84,7 +84,7 @@ final class QueryGlobalErrorTests: XCTestCase {
         func throwingQueryFunction() throws -> [String] {
             throw TestingErrors.Standard
         }
-        _ = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: throwingQueryFunction))
+        _ = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: throwingQueryFunction))
         
         waitForExpectations(timeout: 1)
     }
