@@ -12,28 +12,48 @@ import Combine
 /// Property wrapper that represent an interface to access cache entry's data and subscribe to its changes.
 @propertyWrapper
 public struct NTKQueryValue<TData: Codable>: DynamicProperty {
-    @StateObject private var queryValueInstance: QueryValue<TData>
+    @StateObject private var queryValueInstance: QueryValue<TData, TData>
     
     /// Creates a subscriber instance using the provided key.
     ///
     /// - Parameters:
     ///     - queryKey: Query identifier (known as key) used to specify concrete cache entry to follow.
     public init(queryKey: String) {
-        _queryValueInstance = StateObject(wrappedValue: QueryValue<TData>(queryKey: queryKey))
+        _queryValueInstance = StateObject(wrappedValue: QueryValue<TData, TData>(queryKey: queryKey))
     }
     
     /// The underlying data that belongs to specified cache entry.
     public var wrappedValue: TData? { queryValueInstance.data }
 }
 
+@propertyWrapper
+public struct NTKQuerySelectValue<TFetchedData: Codable, TSelectedData: Codable>: DynamicProperty {
+    @StateObject private var queryValueInstance: QueryValue<TFetchedData, TSelectedData>
+    
+    /// Creates a subscriber instance using the provided key.
+    ///
+    /// - Parameters:
+    ///     - queryKey: Query identifier (known as key) used to specify concrete cache entry to follow.
+    public init(queryKey: String, select: @escaping QuerySelector<TFetchedData, TSelectedData>) {
+        _queryValueInstance = StateObject(wrappedValue: QueryValue<TFetchedData, TSelectedData>(queryKey: queryKey, select: select))
+    }
+    
+    /// The underlying data that belongs to specified cache entry.
+    public var wrappedValue: TSelectedData? { queryValueInstance.data }
+}
+
 /// Represents a subscription interface to get and track data stored in the cache entry.
 @MainActor
-public class QueryValue<TData: Codable>: ObservableObject {
+public class QueryValue<TFetchedData: Codable, TSelectedData: Codable>: ObservableObject {
     /// Data that belongs to specified cache entry.
-    @Published public var data: TData? = nil
-    private var cancellables: Set<AnyCancellable> = []
+    @Published public var data: TSelectedData? = nil
     
-    init(queryKey: String) {
+    private var cancellables: Set<AnyCancellable> = []
+    private let select: QuerySelector<TFetchedData, TSelectedData>?
+    
+    init(queryKey: String, select: QuerySelector<TFetchedData, TSelectedData>? = nil) {
+        self.select = select
+        
         initializeSubscription(queryKey)
         initializeData(queryKey)
     }
@@ -41,8 +61,19 @@ public class QueryValue<TData: Codable>: ObservableObject {
     private func initializeSubscription(_ queryKey: String) {
         QueryInternalPublishersManager.shared.getPublisher(forKey: queryKey)
             .sink { [weak self] message in
-                if let data = message.data {
-                    self?.data = data as? TData
+                guard let newData = message.data as? TFetchedData else { return }
+                
+                guard let select = self?.select else {
+                    self?.data = newData as? TSelectedData
+                    return
+                }
+                
+                if let equatableCurrentData = self?.data as? any Equatable, let equatableNewData = select(newData) as? any Equatable {
+                    if !equatableCurrentData.isEqualTo(equatableNewData) {
+                        self?.data = equatableNewData as? TSelectedData
+                    }
+                } else {
+                    self?.data = newData as? TSelectedData
                 }
             }
             .store(in: &cancellables)
@@ -50,8 +81,12 @@ public class QueryValue<TData: Codable>: ObservableObject {
     
     private func initializeData(_ queryKey: String) {
         Task { [weak self] in
-            if let cacheEntryValue = QueryCache.shared.readCacheEntry(key: queryKey) {
-                self?.data = cacheEntryValue.data as? TData
+            guard let cacheEntryData = QueryCache.shared.readCacheEntry(key: queryKey)?.data as? TFetchedData else { return }
+            
+            if let select = self?.select {
+                self?.data = select(cacheEntryData)
+            } else {
+                self?.data = cacheEntryData as? TSelectedData
             }
         }
     }
