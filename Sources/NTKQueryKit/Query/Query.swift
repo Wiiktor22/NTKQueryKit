@@ -10,7 +10,42 @@ import SwiftUI
 import Combine
 
 @propertyWrapper
-public struct NTKQuery<TFetchedData: Codable, TSelectedData: Codable>: DynamicProperty {
+public struct NTKQuery<TFetchedData: Codable>: DynamicProperty {
+    @StateObject private var query: Query<TFetchedData, TFetchedData>
+    
+    /// Creates a query instance using the provided parameters as local configuration.
+    ///
+    /// - Parameters:
+    ///     - queryKey: Query identifier (known as key) used for connecting to cache entry, accessing global settings and debugging.
+    ///     - queryFunction: Function that performs a request to retrieve data. *(Optional since it can be passed whether via local or global configuration).*
+    ///     - staleTime: The time in milliseconds after data is considered stale. *(Can be set locally per property wrapper or globally via config).*
+    ///     - disableInitialFetch: Option to disable automatical fetch, that is performed when query is initialized. Defaults to false.
+    ///     - meta: Stores additional information about the query that can be used with error handler.
+    public init(
+        queryKey: String,
+        queryFunction: QueryFunction<TFetchedData>? = nil,
+        staleTime: Int? = nil,
+        disableInitialFetch: Bool? = nil,
+        meta: MetaDictionary? = nil
+    ) {
+        let config = QueryConfig(
+            queryFunction: queryFunction,
+            staleTime: staleTime,
+            disableInitialFetch: disableInitialFetch,
+            meta: meta
+        )
+        _query = StateObject(wrappedValue: Query<TFetchedData, TFetchedData>(
+            queryKey: queryKey,
+            config: config
+        ))
+    }
+    
+    /// The underlying query instance created by the wrapper.
+    public var wrappedValue: Query<TFetchedData, TFetchedData> { query }
+}
+
+@propertyWrapper
+public struct NTKQuerySelect<TFetchedData: Codable, TSelectedData: Codable>: DynamicProperty {
     @StateObject private var query: Query<TFetchedData, TSelectedData>
     
     /// Creates a query instance using the provided parameters as local configuration.
@@ -56,8 +91,7 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
     
     private let queryKey: String
     private let config: QueryConfig
-    
-    private let select: QuerySelector<TFetchedData, TSelectedData>
+    private let select: QuerySelector<TFetchedData, TSelectedData>?
     
     /// Indicates whether a query was fetched at least once, not considering the result.
     @Published public var isFetched = false
@@ -118,8 +152,8 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
     
     init(queryKey: String, config: QueryConfig, select: QuerySelector<TFetchedData, TSelectedData>? = nil) {
         self.queryKey = queryKey
-        self.select = select ?? { (_ data: TFetchedData) in data as! TSelectedData }
         self.config = config
+        self.select = select ?? { (_ data: TFetchedData) in data as! TSelectedData }
         
         initializeSubscription(queryKey)
         if (!config.disableInitialFetch) {
@@ -132,16 +166,22 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
     private func initializeSubscription(_ queryKey: String) {
         QueryInternalPublishersManager.shared.getPublisher(forKey: queryKey)
             .sink { [weak self] message in
-                guard let data = message.data as? TFetchedData else { return }
+                guard let newData = message.data as? TFetchedData else { return }
                 
-                if let equatableCurrentData = self?.data as? any Equatable, let equatableNewData = self?.select(data) as? any Equatable {
+                guard let select = self?.select else {
+                    self?.lastStatus = message.status
+                    self?.data = newData as? TSelectedData
+                    return
+                }
+                
+                if let equatableCurrentData = self?.data as? any Equatable, let equatableNewData = select(newData) as? any Equatable {
                     if !equatableCurrentData.isEqualTo(equatableNewData) {
                         self?.lastStatus = message.status
                         self?.data = equatableNewData as? TSelectedData
                     }
                 } else {
                     self?.lastStatus = message.status
-                    self?.data = self?.select(data)
+                    self?.data = newData as? TSelectedData
                 }
             }
             .store(in: &cancellables)
@@ -168,9 +208,24 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
         do {
             // NOTE: Risky line below, not sure if TData assertion will be correct each time
             let fetchedData = try await queryFunction() as! TFetchedData
-            let data = self.select(fetchedData)
             
-            self.data = data
+            if let select = self.select {
+                print(select(fetchedData))
+                if let selectedData = select(fetchedData) as? Optional<TSelectedData> {
+                    print("HERE")
+                    print(selectedData)
+                    self.data = selectedData!
+                } else {
+                    print("HERE2")
+                    self.data = select(fetchedData)
+                }
+            } else {
+                self.data = fetchedData as? TSelectedData
+            }
+            
+            print(self.data)
+            print("============")
+            
             if (self.error != nil) { self.error = nil }
             
             let status: QueryStatus = .Success
@@ -178,6 +233,8 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
             
             return (fetchedData, status)
         } catch let error {
+            print("ERRROR!")
+            print(error)
             self.error = error
             
             let status: QueryStatus = .Error
@@ -223,7 +280,11 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
             let now = Date()
             if (now < cacheEntry.lastUpdateTime + Double(staleTime / 1000)) {
                 Task {
-                    self.data = self.select(cacheEntry.data as! TFetchedData)
+                    if let select = self.select {
+                        self.data = select(cacheEntry.data as! TFetchedData)
+                    } else {
+                        self.data = cacheEntry.data as? TSelectedData
+                    }
                     markQueryAsFetched(withStatus: .Success)
                 }
                 return
