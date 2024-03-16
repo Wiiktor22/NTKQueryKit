@@ -60,7 +60,7 @@ public struct NTKQuerySelect<TFetchedData: Codable, TSelectedData: Codable>: Dyn
         queryKey: String,
         queryFunction: QueryFunction<TFetchedData>? = nil,
         staleTime: Int? = nil,
-        select: QuerySelector<TFetchedData, TSelectedData>? = nil,
+        select: @escaping QuerySelector<TFetchedData, TSelectedData>,
         disableInitialFetch: Bool? = nil,
         meta: MetaDictionary? = nil
     ) {
@@ -153,7 +153,7 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
     init(queryKey: String, config: QueryConfig, select: QuerySelector<TFetchedData, TSelectedData>? = nil) {
         self.queryKey = queryKey
         self.config = config
-        self.select = select ?? { (_ data: TFetchedData) in data as! TSelectedData }
+        self.select = select
         
         initializeSubscription(queryKey)
         if (!config.disableInitialFetch) {
@@ -181,7 +181,7 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
                     }
                 } else {
                     self?.lastStatus = message.status
-                    self?.data = newData as? TSelectedData
+                    self?.data = select(newData)
                 }
             }
             .store(in: &cancellables)
@@ -199,46 +199,27 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
         QueryInternalPublishersManager.shared.sendThroughPublisher(forKey: queryKey, message: message)
     }
     
-    private func markQueryAsFetched(withStatus status: QueryStatus) {
-        self.isFetched = true
-        self.lastStatus = status
+    private func markQueryAsFetched() {
+        if !self.isFetched {
+            self.isFetched = true
+        }
     }
     
-    private func fetchAndAssignData(_ queryKey: String, _ queryFunction: @escaping DefaultQueryFunction) async -> QueryPublisherMessageContent {
+    private func fetchData(_ queryKey: String, _ queryFunction: @escaping DefaultQueryFunction) async -> QueryPublisherMessageContent {
         do {
             // NOTE: Risky line below, not sure if TData assertion will be correct each time
-            let fetchedData = try await queryFunction() as! TFetchedData
-            
-            if let select = self.select {
-                print(select(fetchedData))
-                if let selectedData = select(fetchedData) as? Optional<TSelectedData> {
-                    print("HERE")
-                    print(selectedData)
-                    self.data = selectedData!
-                } else {
-                    print("HERE2")
-                    self.data = select(fetchedData)
-                }
-            } else {
-                self.data = fetchedData as? TSelectedData
-            }
-            
-            print(self.data)
-            print("============")
-            
-            if (self.error != nil) { self.error = nil }
-            
+            let fetchedData = try await queryFunction() as? TFetchedData
             let status: QueryStatus = .Success
-            markQueryAsFetched(withStatus: status)
+            
+            markQueryAsFetched()
+            if (self.error != nil) { self.error = nil }
             
             return (fetchedData, status)
         } catch let error {
-            print("ERRROR!")
-            print(error)
             self.error = error
             
             let status: QueryStatus = .Error
-            markQueryAsFetched(withStatus: status)
+            markQueryAsFetched()
             
             if let globalOnError = NTKQueryGlobalConfig.shared.globalOnErrorQuery {
                 globalOnError(GlobalErrorParameters(error: error, meta: buildMetaDictonary()))
@@ -248,9 +229,9 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
         }
     }
     
-    private func fetchAssignDistrubuteAndSaveData(_ queryKey: String, _ queryFunction: @escaping DefaultQueryFunction, _ staleTime: Int) {
+    private func fetchDistrubuteAndSaveData(_ queryKey: String, _ queryFunction: @escaping DefaultQueryFunction, _ staleTime: Int) {
         Task {
-            let queryPublisherMessageContent = await fetchAndAssignData(queryKey, queryFunction)
+            let queryPublisherMessageContent = await fetchData(queryKey, queryFunction)
             
             distributeUpdatedDataAndStatus(queryKey, queryPublisherMessageContent)
             
@@ -285,7 +266,8 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
                     } else {
                         self.data = cacheEntry.data as? TSelectedData
                     }
-                    markQueryAsFetched(withStatus: .Success)
+                    self.lastStatus = .Success
+                    markQueryAsFetched()
                 }
                 return
             }
@@ -294,7 +276,7 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
         let isUniqueRequest = await ActiveQueriesManager.shared.tryToAddActiveQuery(queryKey)
         
         if (isUniqueRequest) {
-            fetchAssignDistrubuteAndSaveData(queryKey, queryFunction, staleTime)
+            fetchDistrubuteAndSaveData(queryKey, queryFunction, staleTime)
             await ActiveQueriesManager.shared.removeActiveQuery(queryKey)
         }
     }
@@ -306,7 +288,7 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
         guard let queryFunction = self.queryFunction else { return }
         self.lastStatus = .Loading
         
-        fetchAssignDistrubuteAndSaveData(queryKey, queryFunction, staleTime)
+        fetchDistrubuteAndSaveData(queryKey, queryFunction, staleTime)
     }
     
 //    deinit {
