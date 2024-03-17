@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 import Combine
 
-/// Property wrapper that represent an interface to access cache entry's data and subscribe to its changes.
+/// Property wrapper that represents an interface to access cache entry's data and subscribe to its changes.
 @propertyWrapper
 public struct NTKQueryValue<TData: Codable>: DynamicProperty {
     @StateObject private var queryValueInstance: QueryValue<TData, TData>
@@ -26,14 +26,16 @@ public struct NTKQueryValue<TData: Codable>: DynamicProperty {
     public var wrappedValue: TData? { queryValueInstance.data }
 }
 
+/// Property wrapper that represents an interface to access a selected portion of cache entry's data and subscribe to its changes.
 @propertyWrapper
-public struct NTKQuerySelectValue<TFetchedData: Codable, TSelectedData: Codable>: DynamicProperty {
+public struct NTKQueryValueSelect<TFetchedData: Codable, TSelectedData: Codable>: DynamicProperty {
     @StateObject private var queryValueInstance: QueryValue<TFetchedData, TSelectedData>
     
     /// Creates a subscriber instance using the provided key.
     ///
     /// - Parameters:
     ///     - queryKey: Query identifier (known as key) used to specify concrete cache entry to follow.
+    ///     - select: Function used to transform or select a part of fetched data (by queryFunction). It affects stored data in th `data` property, however it does not impact data stored in cache.
     public init(queryKey: String, select: @escaping QuerySelector<TFetchedData, TSelectedData>) {
         _queryValueInstance = StateObject(wrappedValue: QueryValue<TFetchedData, TSelectedData>(queryKey: queryKey, select: select))
     }
@@ -45,7 +47,7 @@ public struct NTKQuerySelectValue<TFetchedData: Codable, TSelectedData: Codable>
 /// Represents a subscription interface to get and track data stored in the cache entry.
 @MainActor
 public class QueryValue<TFetchedData: Codable, TSelectedData: Codable>: ObservableObject {
-    /// Data that belongs to specified cache entry.
+    /// Data that belongs to specified cache entry. (It can be a full data, or a selected portion of it).
     @Published public var data: TSelectedData? = nil
     
     private var cancellables: Set<AnyCancellable> = []

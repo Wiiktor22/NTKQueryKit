@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 import Combine
 
+/// Property wrapper that represents an interface to perform an operation which fetches and retrieves data from a specified data source.
 @propertyWrapper
 public struct NTKQuery<TFetchedData: Codable>: DynamicProperty {
     @StateObject private var query: Query<TFetchedData, TFetchedData>
@@ -44,6 +45,7 @@ public struct NTKQuery<TFetchedData: Codable>: DynamicProperty {
     public var wrappedValue: Query<TFetchedData, TFetchedData> { query }
 }
 
+/// Property wrapper that represents an interface to perform an operation which fetches data from a specified data source and retrieves only a selected portion of it.
 @propertyWrapper
 public struct NTKQuerySelect<TFetchedData: Codable, TSelectedData: Codable>: DynamicProperty {
     @StateObject private var query: Query<TFetchedData, TSelectedData>
@@ -54,6 +56,7 @@ public struct NTKQuerySelect<TFetchedData: Codable, TSelectedData: Codable>: Dyn
     ///     - queryKey: Query identifier (known as key) used for connecting to cache entry, accessing global settings and debugging.
     ///     - queryFunction: Function that performs a request to retrieve data. *(Optional since it can be passed whether via local or global configuration).*
     ///     - staleTime: The time in milliseconds after data is considered stale. *(Can be set locally per property wrapper or globally via config).*
+    ///     - select: Function used to transform or select a part of fetched data (by queryFunction). It affects stored data in th `data` property, however it does not impact data stored in cache.
     ///     - disableInitialFetch: Option to disable automatical fetch, that is performed when query is initialized. Defaults to false.
     ///     - meta: Stores additional information about the query that can be used with error handler.
     public init(
@@ -99,7 +102,7 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
     /// Status that represent last known result of the particular query.
     @Published public var lastStatus: QueryStatus = .Loading
     
-    /// Data stored in the cache entry identified by provided key.
+    /// Data which is being selected from the cache entry identified by provided key. (It can be a full data, or a selected portion of it).
     @Published public var data: TSelectedData? = nil
     
     /// Error that was encountered during the query usage.

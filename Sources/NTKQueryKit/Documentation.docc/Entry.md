@@ -23,13 +23,16 @@ TODO
 ### Query
 
 - ``NTKQuery``
+- ``NTKQuerySelect``
 - ``Query``
 - ``QueryConfig``
 - ``NTKQueryValue``
+- ``NTKQueryValueSelect``
 - ``QueryValue``
 - ``QueryStatus``
 - ``QueryFunction``
 - ``DefaultQueryFunction``
+- ``QuerySelector``
 
 ### Mutation
 
