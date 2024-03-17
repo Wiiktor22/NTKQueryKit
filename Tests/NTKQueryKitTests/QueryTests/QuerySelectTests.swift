@@ -66,4 +66,26 @@ final class QuerySelectTests: XCTestCase {
         XCTAssertEqual(mainQuery.data, ["Full", "Data", "Changed", "Data"], "After update, query instance should have updated (full) access to data")
         XCTAssertEqual(partialQuery.data, ["Data", "Data"], "After update, query instance should run select function again to provide updated portion of data")
     }
+    
+    func testSelectWithQueryValue() throws {
+        let queryFuncExp = expectation(description: "Local queryFunction was called, therefore data is fetched")
+        func localQueryFunction() -> [String] {
+            queryFuncExp.fulfill()
+            return ["Full", "Data"]
+        }
+        
+        func select(_ data: [String]) -> Int {
+            let filteredData = data.filter { $0 == "Data" }
+            print(filteredData)
+            return filteredData.count
+        }
+        
+        let query = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: localQueryFunction))
+        let queryValue = QueryValue<[String], Int>(queryKey: testingQueryKey, select: select)
+        
+        wait(for: [queryFuncExp], timeout: 1)
+        
+        XCTAssertEqual(query.data, ["Full", "Data"], "For query instance without provided select function fetched data should be available")
+        XCTAssertEqual(queryValue.data, 1, "For query value instance with provided select function only selected data should be available")
+    }
 }
