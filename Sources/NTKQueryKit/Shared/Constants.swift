@@ -20,6 +20,8 @@ public enum QueryStatus {
 public typealias DefaultQueryFunction = () async throws -> Codable
 /// A type representing query function with generic response type.
 public typealias QueryFunction<TData: Codable> = () async throws -> TData
+/// A type representing query selector with generic input and output data.
+public typealias QuerySelector<TFetchedData: Codable, TSelectedData: Codable> = (_ data: TFetchedData) -> TSelectedData
 
 /// A type representing dictionary (used for applying global config) that contains `queryKey` and ``QueryConfig``.
 public typealias QueriesConfigDictionary = [String: QueryConfig]

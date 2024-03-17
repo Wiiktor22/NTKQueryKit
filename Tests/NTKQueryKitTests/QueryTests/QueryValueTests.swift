@@ -31,8 +31,8 @@ final class QueryValueTests: XCTestCase {
             return ["Query", "Function"]
         }
         
-        let query = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction, staleTime: 20000))
-        let queryValue = QueryValue<[String]>(queryKey: testingQueryKey)
+        let query = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction, staleTime: 20000))
+        let queryValue = QueryValue<[String], [String]>(queryKey: testingQueryKey)
         
         waitForExpectations(timeout: 1)
         XCTAssertEqual(query.data, ["Query", "Function"], "Fetched data is saved in Query")
@@ -56,8 +56,8 @@ final class QueryValueTests: XCTestCase {
             }
         }
         
-        let query = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction, staleTime: 20000))
-        let queryValue = QueryValue<[String]>(queryKey: testingQueryKey)
+        let query = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: queryFunction, staleTime: 20000))
+        let queryValue = QueryValue<[String], [String]>(queryKey: testingQueryKey)
         
         wait(for: [fetchExp], timeout: 1)
         
@@ -74,7 +74,7 @@ final class QueryValueTests: XCTestCase {
         
         QueryClient.shared.setQueryData(queryKey: testingQueryKey, data: ["Manual", "Overwrite"])
         
-        let queryValue = QueryValue<[String]>(queryKey: testingQueryKey)
+        let queryValue = QueryValue<[String], [String]>(queryKey: testingQueryKey)
         
         let exp = expectation(description: "Publisher")
         

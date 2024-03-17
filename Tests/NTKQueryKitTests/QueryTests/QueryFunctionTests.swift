@@ -29,7 +29,7 @@ final class QueryFunctionTests: XCTestCase {
             return ["NTKQueryKit"]
         }
         
-        _ = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: localQueryFunction))
+        _ = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: localQueryFunction))
         
         waitForExpectations(timeout: 1)
     }
@@ -44,7 +44,7 @@ final class QueryFunctionTests: XCTestCase {
         let queriesConfig = [testingQueryKey: QueryConfig(queryFunction: globalQueryFunction)]
         NTKQueryGlobalConfig.shared.initializeWithConfiguration(queriesConfig: queriesConfig)
         
-        _ = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig())
+        _ = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig())
         
         waitForExpectations(timeout: 1)
     }
@@ -63,7 +63,7 @@ final class QueryFunctionTests: XCTestCase {
         let queriesConfig = [testingQueryKey: QueryConfig(queryFunction: globalQueryFunction)]
         NTKQueryGlobalConfig.shared.initializeWithConfiguration(queriesConfig: queriesConfig)
         
-        _ = Query<[String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: localQueryFunction))
+        _ = Query<[String], [String]>(queryKey: testingQueryKey, config: QueryConfig(queryFunction: localQueryFunction))
         
         waitForExpectations(timeout: 1)
     }
