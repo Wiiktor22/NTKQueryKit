@@ -73,7 +73,7 @@ public class QueryValue<TFetchedData: Codable, TSelectedData: Codable>: Observab
                         self?.data = equatableNewData as? TSelectedData
                     }
                 } else {
-                    self?.data = newData as? TSelectedData
+                    self?.data = select(newData)
                 }
             }
             .store(in: &cancellables)
