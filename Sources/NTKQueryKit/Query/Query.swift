@@ -168,6 +168,7 @@ public class Query<TFetchedData: Codable, TSelectedData: Codable>: ObservableObj
     
     private func initializeSubscription(_ queryKey: String) {
         QueryInternalPublishersManager.shared.getPublisher(forKey: queryKey)
+            .receive(on: RunLoop.main)
             .sink { [weak self] message in
                 guard let newData = message.data as? TFetchedData else { return }
                 
